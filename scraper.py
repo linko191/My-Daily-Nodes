@@ -119,9 +119,9 @@ async def main():
         # Null မဟုတ်တဲ့ (Cloudflare မဟုတ်တဲ့) ဟာတွေကိုပဲ ယူမယ်
         true_ip_nodes = [res for res in filtered_results if res]
 
-        # Node တွေများလွန်းရင် ဖုန်းလေးတဲ့အတွက် Random အခု ၅၀၀ သာ ယူရန်
-        if len(true_ip_nodes) > 500:
-            true_ip_nodes = random.sample(true_ip_nodes, 500)
+        # Node တွေများလွန်းရင် ဖုန်းလေးတဲ့အတွက် Random အခု ၁၅၀ သာ ယူရန်
+        if len(true_ip_nodes) > 150:
+            true_ip_nodes = random.sample(true_ip_nodes, 150)
 
         # File ထဲ သိမ်းခြင်း
         with open("True_IP_Configs.txt", "w", encoding="utf-8") as f:
