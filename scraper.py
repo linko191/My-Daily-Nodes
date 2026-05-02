@@ -1,3 +1,4 @@
+
 import asyncio
 import aiohttp
 import base64
@@ -6,7 +7,7 @@ import sys
 import urllib.parse
 import random
 
-# Source အသစ်များ (Vmess နဲ့ Trojan တွေပါ ထပ်တိုးထားပါတယ်)
+# Source အသစ်များ (Vmess, Vless, Trojan အစုံပါဝင်သည်)
 SOURCES = [
     "https://raw.githubusercontent.com/yebekhe/TelegramV2rayCollector/main/sub/normal/vless",
     "https://raw.githubusercontent.com/yebekhe/TelegramV2rayCollector/main/sub/normal/vmess",
@@ -37,16 +38,20 @@ async def fetch_configs(session, url):
         print(f"[!] Error fetching {url}: {e}")
         return []
 
-def is_argentina(config):
-    """Node အမည်တွင် Argentina ဆိုင်ရာ စာသားပါ/မပါ စစ်ဆေးရန်"""
+def is_target_country(config):
+    """Vietnam, India, Turkey ဆိုင်ရာ စာသားပါ/မပါ စစ်ဆေးရန်"""
     if not config.strip() or "#" not in config:
         return False
     
-    # URL encoded ဖြစ်နေသော နာမည်များကို ဖတ်နိုင်ရန် ပြောင်းခြင်း
     try:
         remark = urllib.parse.unquote(config.split("#", 1)[1])
-        # "argentina", "🇦🇷", သို့မဟုတ် "AR" (Case-insensitive) ကို ရှာခြင်း
-        if re.search(r'(?i)(argentina|🇦🇷|\bar\b)', remark):
+        
+        # နိုင်ငံအမည် အပြည့်အစုံ သို့မဟုတ် အလံပုံများကို စစ်ဆေးခြင်း (အကြီးအသေး မရွေးပါ)
+        if re.search(r'(?i)(vietnam|india|turkey|🇻🇳|🇮🇳|🇹🇷)', remark):
+            return True
+            
+        # နိုင်ငံကုဒ်များကို စစ်ဆေးခြင်း (အင်္ဂလိပ်စာလုံး 'in' နှင့် မမှားစေရန် အကြီးစာလုံး သီးသန့်စစ်သည်)
+        if re.search(r'\b(VN|IN|TR)\b', remark):
             return True
     except:
         pass
@@ -55,7 +60,7 @@ def is_argentina(config):
 async def main():
     connector = aiohttp.TCPConnector(limit=100)
     async with aiohttp.ClientSession(connector=connector) as session:
-        print("--- Scraping Started... Looking for Argentina (AR) Nodes ---")
+        print("--- Scraping Started... Looking for VN, IN, TR Nodes ---")
         all_raw_configs = []
         
         fetch_tasks = [fetch_configs(session, url) for url in SOURCES]
@@ -64,25 +69,25 @@ async def main():
         for configs in results:
             all_raw_configs.extend(configs)
 
-        print(f"Total found: {len(all_raw_configs)} nodes. Filtering strictly for AR...")
+        print(f"Total found: {len(all_raw_configs)} nodes. Filtering strictly for VN, IN, TR...")
 
-        # Argentina ဟုတ်မဟုတ် စစ်ထုတ်ခြင်း
-        ar_nodes = [cfg for cfg in all_raw_configs if is_argentina(cfg)]
+        # သတ်မှတ်ထားသော နိုင်ငံများ ဟုတ်မဟုတ် စစ်ထုတ်ခြင်း
+        target_nodes = [cfg for cfg in all_raw_configs if is_target_country(cfg)]
         
         # ထပ်နေသော (Duplicate) လင့်ခ်များကို ဖယ်ရှားခြင်း
-        ar_nodes = list(set(ar_nodes))
+        target_nodes = list(set(target_nodes))
 
         # အလုံး ၃၀၀ ထက်များခဲ့လျှင် ၃၀၀ သာ ရွေးရန်
-        if len(ar_nodes) > 300:
-            ar_nodes = random.sample(ar_nodes, 300)
+        if len(target_nodes) > 300:
+            target_nodes = random.sample(target_nodes, 300)
 
         # File ထဲ သိမ်းခြင်း
         with open("True_IP_Configs.txt", "w", encoding="utf-8") as f:
-            for node in ar_nodes:
+            for node in target_nodes:
                 f.write(node + "\n")
         
         print(f"--- Done! ---")
-        print(f"Saved {len(ar_nodes)} Argentina nodes!")
+        print(f"Saved {len(target_nodes)} nodes from VN, IN, TR!")
 
 if __name__ == "__main__":
     if sys.platform == "win32":
